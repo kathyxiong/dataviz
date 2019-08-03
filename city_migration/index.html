@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>U.S. Domestic Migration</title>
+		<script type="text/javascript" src="../d3.js"></script>
+	</head>
+	<body>
+		<script type="text/javascript">
+			var rowConverter = function(d) {
+				return {
+					state_cd: d.state_cd,
+					county_cd: d.county_cd,
+					state: d.state,
+					county: d.county,
+					y1_pop: +d.y1_pop,
+					in_total: +d.in_total,
+					in_pct: +d.in_pct,
+					y0_pop: +d.y0_pop,
+					out_total: +d.out_total,
+					out_pct: +d.out_pct
+				};
+			}
+
+			d3.csv("data/viz_data.csv", rowConverter)
+				.then(function(dataset) {
+					// console.log(dataset[0]);
+
+					var w = 600;
+					var h = 600;
+					var pad = 50;
+
+					var x_max = 0.15;
+					var y_max = 0.15;
+					var a_max = d3.max(dataset, function(d) { return d.y1_pop; });
+
+					var xScale = d3.scaleLinear()
+						.domain([0, x_max])
+						.range([pad, w - pad]);
+
+					var yScale = d3.scaleLinear()
+						.domain([0, y_max])
+						.range([h - pad, pad]);
+
+					var aScale = d3.scaleSqrt()
+						.domain([0, a_max])
+						.range([0, 20])
+
+					var svg = d3.select("body")
+						.append("svg")
+						.attr("width", w)
+						.attr("height", h);
+
+					svg.selectAll("circle")
+						.data(dataset)
+						.enter()
+						.append("circle")
+						.attr("cx", function(d) {
+							return xScale(d.in_pct);
+						})
+						.attr("cy", function(d) {
+							return yScale(d.out_pct);
+						})
+						.attr("r", function(d) {
+							return aScale(d.y1_pop);
+						})
+						.attr("opacity", 0.5);
+				});
+		</script>
+	</body>
+</html>
