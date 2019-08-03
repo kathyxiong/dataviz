@@ -2,17 +2,15 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>U.S. Domestic Migration</title>
-		<script type="text/javascript" src="../d3.js"></script>
+		<title>U.S. Metro Area Migration</title>
+		<script type="text/javascript" src="../d3/d3.js"></script>
 	</head>
 	<body>
 		<script type="text/javascript">
 			var rowConverter = function(d) {
 				return {
-					state_cd: d.state_cd,
-					county_cd: d.county_cd,
-					state: d.state,
-					county: d.county,
+					metro_cd: d.metro_cd,
+					metro: d.metro,
 					y1_pop: +d.y1_pop,
 					in_total: +d.in_total,
 					in_pct: +d.in_pct,
@@ -24,27 +22,42 @@
 
 			d3.csv("data/viz_data.csv", rowConverter)
 				.then(function(dataset) {
-					// console.log(dataset[0]);
+					console.log(dataset[0]);
 
 					var w = 600;
 					var h = 600;
 					var pad = 50;
 
-					var x_max = 0.15;
-					var y_max = 0.15;
-					var a_max = d3.max(dataset, function(d) { return d.y1_pop; });
+					var xMax_pct = d3.max(dataset, function(d) { return d.in_pct; });
+					var yMax_pct = d3.max(dataset, function(d) { return d.out_pct; });
+
+					var xMax_cnt = d3.max(dataset, function(d) { return d.in_total; });
+					var yMax_cnt = d3.max(dataset, function(d) { return d.out_total; });
+
+					var aMax = d3.max(dataset, function(d) { return d.y1_pop; });
 
 					var xScale = d3.scaleLinear()
-						.domain([0, x_max])
+						.domain([0, xMax_pct])
 						.range([pad, w - pad]);
 
 					var yScale = d3.scaleLinear()
-						.domain([0, y_max])
+						.domain([0, yMax_pct])
 						.range([h - pad, pad]);
 
 					var aScale = d3.scaleSqrt()
-						.domain([0, a_max])
-						.range([0, 20])
+						.domain([0, aMax])
+						.range([0, 20]);
+
+					var formatPct = d3.format(".0%");
+					var formatComma = d3.format(",");
+
+					var xAxis = d3.axisBottom()
+						.scale(xScale)
+						.tickFormat(formatPct);
+
+					var yAxis = d3.axisLeft()
+						.scale(yScale)
+						.tickFormat(formatPct);
 
 					var svg = d3.select("body")
 						.append("svg")
@@ -64,8 +77,74 @@
 						.attr("r", function(d) {
 							return aScale(d.y1_pop);
 						})
+						.attr("fill", "black")
 						.attr("opacity", 0.5);
+
+					svg.append("line")
+						.attr("class", "ref-line")
+						.style("stroke", "black")
+						.attr("x1", xScale(0))
+						.attr("x2", xScale(Math.min(xMax_pct, yMax_pct)))
+						.attr("y1", yScale(0))
+						.attr("y2", yScale(Math.min(xMax_pct, yMax_pct)));
+
+					svg.append("g")
+						.attr("class", "x-axis")
+						.attr("transform", "translate(0," + (h - pad) + ")")
+						.call(xAxis);
+
+					svg.append("g")
+						.attr("class", "y-axis")
+						.attr("transform", "translate(" + pad + ",0)")
+						.call(yAxis);
+
+					d3.select("p")
+						.on("click", function() {
+
+							xScale.domain([0, xMax_cnt]);
+							yScale.domain([0, yMax_cnt]);
+
+							xAxis.tickFormat(formatComma);
+							yAxis.tickFormat(formatComma);
+
+							svg.selectAll("circle")
+								.data(dataset)
+								.transition()
+								.duration(1000)
+								.attr("cx", function(d) {
+									return xScale(d.in_total);
+								})
+								.attr("cy", function(d) {
+									return yScale(d.out_total);
+								})
+								.attr("r", function(d) {
+									return aScale(d.y1_pop);
+								})
+								.attr("fill", "black")
+								.attr("opacity", 0.5);
+
+							svg.select(".ref-line")
+								.transition()
+								.duration(1000)
+								.attr("x1", xScale(0))
+								.attr("x2", xScale(Math.min(xMax_cnt, yMax_cnt)))
+								.attr("y1", yScale(0))
+								.attr("y2", yScale(Math.min(xMax_cnt, yMax_cnt)));
+
+							svg.select(".x-axis")
+								.transition()
+								.duration(1000)
+								.call(xAxis);
+
+							svg.select(".y-axis")
+								.transition()
+								.duration(1000)
+								.call(yAxis);
+
+						});
+
 				});
 		</script>
+		<p>Click to change view</p>
 	</body>
 </html>

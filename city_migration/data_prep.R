@@ -17,14 +17,14 @@ mig_2 <- bind_rows(mig) %>%
   filter(!is.na(y1_pop))
 
 y1 <- mig_2 %>% 
-  select(starts_with("y1"), starts_with("from")) %>% 
+  select(starts_with("y1"), starts_with("from_")) %>% 
   distinct() %>% 
   replace(is.na(.), 0) %>% 
   mutate(in_total = from_diff_metro + from_other_us,
          in_pct = in_total / y1_pop)
 
 y0 <- mig_2 %>% 
-  select(starts_with("y0"), starts_with("to")) %>% 
+  select(starts_with("y0"), starts_with("to_")) %>% 
   distinct() %>% 
   replace(is.na(.), 0) %>% 
   mutate(out_total = to_diff_metro + to_other_us,
